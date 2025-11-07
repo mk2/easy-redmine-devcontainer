@@ -1,0 +1,83 @@
+version: '3'
+
+services:
+  app:
+    env_file: .env
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+
+    volumes:
+      - ${REDMINE_PATH}:/workspaces/redmine:cached
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    # DB や Selenium コンテナと同じユーザー定義ネットワークに接続する。
+    networks:
+      - devcontainer
+
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./create-db-user.sql:/docker-entrypoint-initdb.d/create-db-user.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+      # Your config/database.yml should use the user and password you set here,
+      # and host "db" (as that's the name of this service). You can use whatever
+      # database name you want. Use `bin/rails db:prepare` to create the database.
+      #
+      # Example:
+      #
+      #  development:
+      #    <<: *default
+      #    host: db
+      #    username: postgres
+      #    password: postgres
+      #    database: myapp_development
+
+    networks:
+      - devcontainer
+
+    # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  selenium:
+    # 通常の環境では、以下のイメージを使います。
+    # image: selenium/standalone-chrome
+    # M1 Mac など ARM で動作する環境では、以下のイメージを使います。
+    image: seleniarm/standalone-chromium
+    ports:
+      # Selenium サーバに接続するポート
+      - "4444:4444"
+      # VNC で接続するポート
+      - "5900:5900"
+      # Selenium サーバのログを出力するポート
+      - "7900:7900"
+    # コンテナが使用するメモリの上限を設定
+    shm_size: "2gb"
+
+    networks:
+      - devcontainer
+
+  maildev:
+    image: maildev/maildev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+
+    networks:
+      - devcontainer
+
+volumes:
+  postgres-data:
+
+networks:
+  devcontainer:

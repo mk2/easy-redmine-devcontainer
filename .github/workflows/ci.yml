@@ -30,7 +30,7 @@ jobs:
         run: |
           cat > easy-redmine-devcontainer/.devcontainer/.env << 'EOF'
           CI=true
-          REDMINE_PATH=../redmine
+          REDMINE_PATH=../../redmine
           INSTALL_CLAUDE_CODE=false
           INSTALL_OPENAI_CODEX=false
           SELENIUM_IMAGE=selenium/standalone-chrome

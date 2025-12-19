@@ -56,6 +56,11 @@ jobs:
           runCmd: |
             set -e
 
+            echo "=== Changing to Redmine directory ==="
+            cd /workspaces/redmine
+            pwd
+            ls -la
+
             echo "=== Installing Ruby dependencies ==="
             bundle install --jobs 4
 

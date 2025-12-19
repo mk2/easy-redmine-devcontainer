@@ -61,11 +61,10 @@ jobs:
           # Debug: show running containers and networks
           echo "=== Running containers ==="
           docker compose ps
+          echo "=== DB container logs ==="
+          docker compose logs db
           echo "=== Networks ==="
           docker network ls
-          echo "=== App container network settings ==="
-          docker compose exec -T app cat /etc/hosts || true
-          docker compose exec -T app ping -c 2 db || true
 
       - name: Wait for database
         working-directory: easy-redmine-devcontainer/.devcontainer

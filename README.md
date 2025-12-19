@@ -56,7 +56,7 @@ git clone https://github.com/redmine/redmine.git
 # ディレクトリ構成は以下のようになります：
 # parent-directory/
 # ├── redmine/                    # Redmine のソースコード
-# └── redmine-devcontainer-oss/   # このリポジトリ
+# └── easy-redmine-devcontainer/   # このリポジトリ
 ```
 
 ### 2. 環境変数ファイルを作成
@@ -245,7 +245,7 @@ mise install
 ## ディレクトリ構成
 
 ```
-redmine-devcontainer-oss/
+easy-redmine-devcontainer/
 ├── .devcontainer/
 │   ├── Dockerfile              # コンテナイメージの定義
 │   ├── devcontainer.json       # Dev Container の設定

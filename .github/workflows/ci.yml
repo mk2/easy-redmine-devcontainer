@@ -58,6 +58,15 @@ jobs:
           echo "Waiting for services to start..."
           sleep 10
 
+          # Debug: show running containers and networks
+          echo "=== Running containers ==="
+          docker compose ps
+          echo "=== Networks ==="
+          docker network ls
+          echo "=== App container network settings ==="
+          docker compose exec -T app cat /etc/hosts || true
+          docker compose exec -T app ping -c 2 db || true
+
       - name: Wait for database
         working-directory: easy-redmine-devcontainer/.devcontainer
         run: |
@@ -70,6 +79,11 @@ jobs:
             echo "Attempt $i: PostgreSQL not ready yet..."
             sleep 2
           done
+
+          # Verify app can reach db
+          echo "=== Verifying app can reach db ==="
+          docker compose exec -T app getent hosts db || echo "getent failed, trying nslookup..."
+          docker compose exec -T app nslookup db || echo "nslookup also failed"
 
       - name: Setup Redmine
         working-directory: easy-redmine-devcontainer/.devcontainer

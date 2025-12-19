@@ -2,6 +2,12 @@
 
 set -euxo pipefail
 
+# CI環境では開発ツールのセットアップをスキップ
+if [ "${CI:-false}" = "true" ]; then
+  echo "CI environment detected, skipping development tool installation"
+  exit 0
+fi
+
 # .local を含めてオーナー変更
 sudo install -d -o vscode -g vscode ~/.claude
 

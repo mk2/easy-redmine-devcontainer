@@ -29,6 +29,7 @@ jobs:
       - name: Setup DevContainer environment
         run: |
           cat > easy-redmine-devcontainer/.devcontainer/.env << 'EOF'
+          CI=true
           REDMINE_PATH=../redmine
           INSTALL_CLAUDE_CODE=false
           INSTALL_OPENAI_CODEX=false

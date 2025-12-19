@@ -182,6 +182,17 @@ REDMINE_PATH=../redmine
 
 ### オプションの環境変数
 
+| 変数名 | デフォルト | 説明 |
+|--------|-----------|------|
+| `INSTALL_CLAUDE_CODE` | `true` | Claude Code のインストール有無 |
+| `INSTALL_OPENAI_CODEX` | `true` | OpenAI Codex のインストール有無 |
+
+```bash
+# 例: Claude Code のみインストールする場合
+INSTALL_CLAUDE_CODE=true
+INSTALL_OPENAI_CODEX=false
+```
+
 GitHub CLIを使用する場合、`scripts/init.sh` が自動的にGitHubトークンを設定します。
 
 ## トラブルシューティング

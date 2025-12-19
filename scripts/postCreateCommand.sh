@@ -5,6 +5,9 @@ set -euxo pipefail
 # .local を含めてオーナー変更
 sudo install -d -o vscode -g vscode ~/.claude
 
+# install mise
+curl https://mise.run | sh
+
 mise settings add idiomatic_version_file_enable_tools ruby
 mise settings add idiomatic_version_file_enable_tools node
 mise trust
@@ -36,11 +39,15 @@ git clone --depth=1 https://github.com/Bash-it/bash-it.git ~/.bash_it
 # mise use "ruby@${series}"
 
 # #*** Install Node.js
-# mise use node@latest
+mise use node@latest
 
-#*** Install codex
-mise install npm:@openai/codex
-mise use -g npm:@openai/codex
+#*** Install codex (controlled by INSTALL_OPENAI_CODEX env var, default: true)
+if [ "${INSTALL_OPENAI_CODEX:-true}" = "true" ]; then
+  mise install npm:@openai/codex
+  mise use -g npm:@openai/codex
+fi
 
-#*** Install Claude Code
-curl -fsSL https://claude.ai/install.sh | bash
+#*** Install Claude Code (controlled by INSTALL_CLAUDE_CODE env var, default: true)
+if [ "${INSTALL_CLAUDE_CODE:-true}" = "true" ]; then
+  curl -fsSL https://claude.ai/install.sh | bash
+fi

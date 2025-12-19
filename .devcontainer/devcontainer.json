@@ -15,11 +15,6 @@
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
-		"ghcr.io/atty303/devcontainer-features/mise:1": {
-			"trust": true,
-			"install": true,
-			"activate": "path"
-		},
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 
@@ -31,7 +26,14 @@
 	"postCreateCommand": "/workspaces/tmp-redmine-devcontainer/scripts/postCreateCommand.sh",
 
 	// Configure tool-specific properties.
-  "customizations": {},
+    "customizations": {
+		"vscode": {
+			"extensions": [
+				"Anthropic.claude-code",
+				"Shopify.ruby-extensions-pack"
+			]
+		}
+	},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "vscode",

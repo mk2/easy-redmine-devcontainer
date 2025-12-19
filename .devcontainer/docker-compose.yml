@@ -50,10 +50,9 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   selenium:
-    # 通常の環境では、以下のイメージを使います。
-    # image: selenium/standalone-chrome
-    # M1 Mac など ARM で動作する環境では、以下のイメージを使います。
-    image: seleniarm/standalone-chromium
+    # デフォルトは ARM 用イメージ（M1 Mac など）
+    # CI では SELENIUM_IMAGE=selenium/standalone-chrome を設定して x86_64 用に切り替え
+    image: ${SELENIUM_IMAGE:-seleniarm/standalone-chromium}
     ports:
       # Selenium サーバに接続するポート
       - "4444:4444"

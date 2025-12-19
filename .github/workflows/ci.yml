@@ -1,0 +1,84 @@
+name: DevContainer CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-devcontainer:
+    name: Test DevContainer Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout DevContainer repository
+        uses: actions/checkout@v4
+        with:
+          path: easy-redmine-devcontainer
+
+      - name: Clone Redmine from official repository
+        uses: actions/checkout@v4
+        with:
+          repository: redmine/redmine
+          ref: master
+          path: redmine
+
+      - name: Setup DevContainer environment
+        run: |
+          cat > easy-redmine-devcontainer/.devcontainer/.env << 'EOF'
+          REDMINE_PATH=../redmine
+          INSTALL_CLAUDE_CODE=false
+          INSTALL_OPENAI_CODEX=false
+          SELENIUM_IMAGE=selenium/standalone-chrome
+          EOF
+
+      - name: Configure Redmine database connection
+        run: |
+          cat > redmine/config/database.yml << 'EOF'
+          development:
+            adapter: postgresql
+            database: redmine_development
+            host: db
+            username: postgres
+            password: postgres
+            encoding: unicode
+          EOF
+
+      - name: Build and run DevContainer
+        uses: devcontainers/ci@v0.3
+        with:
+          subFolder: easy-redmine-devcontainer
+          push: never
+          runCmd: |
+            set -e
+
+            echo "=== Installing Ruby dependencies ==="
+            bundle install --jobs 4
+
+            echo "=== Waiting for PostgreSQL ==="
+            for i in $(seq 1 30); do
+              pg_isready -h db -U postgres && break
+              sleep 2
+            done
+
+            echo "=== Setting up database ==="
+            bundle exec rake db:create
+            bundle exec rake db:migrate
+            bundle exec rake redmine:load_default_data RAILS_ENV=development REDMINE_LANG=en
+
+            echo "=== Starting Rails server ==="
+            bundle exec rails server -b 0.0.0.0 -p 3000 -d
+
+            echo "=== Verifying HTTP 200 ==="
+            for i in $(seq 1 30); do
+              if curl -sSf http://localhost:3000/ > /dev/null 2>&1; then
+                echo "SUCCESS: HTTP 200 OK"
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "FAILURE: Server did not respond"
+            exit 1

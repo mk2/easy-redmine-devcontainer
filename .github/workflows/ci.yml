@@ -48,43 +48,69 @@ jobs:
             encoding: unicode
           EOF
 
-      - name: Build and run DevContainer
-        uses: devcontainers/ci@v0.3
-        with:
-          subFolder: easy-redmine-devcontainer
-          push: never
-          runCmd: |
-            set -e
+      - name: Build and start services
+        working-directory: easy-redmine-devcontainer/.devcontainer
+        run: |
+          docker compose build
+          docker compose up -d
 
-            echo "=== Changing to Redmine directory ==="
-            cd /workspaces/redmine
-            pwd
-            ls -la
+          # Wait for services to be ready
+          echo "Waiting for services to start..."
+          sleep 10
 
-            echo "=== Installing Ruby dependencies ==="
-            bundle install --jobs 4
+      - name: Wait for database
+        working-directory: easy-redmine-devcontainer/.devcontainer
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in $(seq 1 30); do
+            if docker compose exec -T db pg_isready -U postgres; then
+              echo "PostgreSQL is ready!"
+              break
+            fi
+            echo "Attempt $i: PostgreSQL not ready yet..."
+            sleep 2
+          done
 
-            echo "=== Waiting for PostgreSQL ==="
-            for i in $(seq 1 30); do
-              pg_isready -h db -U postgres && break
-              sleep 2
-            done
+      - name: Setup Redmine
+        working-directory: easy-redmine-devcontainer/.devcontainer
+        run: |
+          echo "=== Installing Ruby dependencies ==="
+          docker compose exec -T app bash -c "cd /workspaces/redmine && bundle install --jobs 4"
 
-            echo "=== Setting up database ==="
-            bundle exec rake db:create
-            bundle exec rake db:migrate
-            bundle exec rake redmine:load_default_data RAILS_ENV=development REDMINE_LANG=en
+          echo "=== Creating database ==="
+          docker compose exec -T app bash -c "cd /workspaces/redmine && bundle exec rake db:create"
 
-            echo "=== Starting Rails server ==="
-            bundle exec rails server -b 0.0.0.0 -p 3000 -d
+          echo "=== Running migrations ==="
+          docker compose exec -T app bash -c "cd /workspaces/redmine && bundle exec rake db:migrate"
 
-            echo "=== Verifying HTTP 200 ==="
-            for i in $(seq 1 30); do
-              if curl -sSf http://localhost:3000/ > /dev/null 2>&1; then
-                echo "SUCCESS: HTTP 200 OK"
-                exit 0
-              fi
-              sleep 2
-            done
-            echo "FAILURE: Server did not respond"
-            exit 1
+          echo "=== Loading default data ==="
+          docker compose exec -T app bash -c "cd /workspaces/redmine && bundle exec rake redmine:load_default_data RAILS_ENV=development REDMINE_LANG=en"
+
+      - name: Start Rails server and verify HTTP 200
+        working-directory: easy-redmine-devcontainer/.devcontainer
+        run: |
+          echo "=== Starting Rails server ==="
+          docker compose exec -T -d app bash -c "cd /workspaces/redmine && bundle exec rails server -b 0.0.0.0 -p 3000"
+
+          echo "=== Waiting for Rails server ==="
+          sleep 5
+
+          echo "=== Verifying HTTP 200 ==="
+          for i in $(seq 1 30); do
+            if docker compose exec -T app curl -sSf http://localhost:3000/ > /dev/null 2>&1; then
+              echo "SUCCESS: HTTP 200 OK"
+              docker compose exec -T app curl -I http://localhost:3000/
+              exit 0
+            fi
+            echo "Attempt $i: Server not ready yet..."
+            sleep 2
+          done
+
+          echo "FAILURE: Server did not respond"
+          docker compose logs app
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        working-directory: easy-redmine-devcontainer/.devcontainer
+        run: docker compose down -v

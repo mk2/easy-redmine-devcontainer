@@ -30,6 +30,7 @@
 		"vscode": {
 			"extensions": [
 				"Anthropic.claude-code",
+				"openai.chatgpt",
 				"Shopify.ruby-extensions-pack"
 			]
 		}
